@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinExe = a real windowed application, no separate black cmd window pops up next to it.
+         All Console.WriteLine output is captured by MainWindow's UiConsoleWriter and shown live
+         in the "Debug-Log" panel inside the app window instead. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>RemoteControlServer</RootNamespace>
+    <AssemblyName>RemoteControlServer</AssemblyName>
+    <Platforms>x64</Platforms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Windows Graphics Capture / Win32 interop requires this -->
+    <EnableComHosting>false</EnableComHosting>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WebSocket server -->
+    <PackageReference Include="Fleck" Version="1.2.0" />
+    <!-- QR code generation for pairing -->
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+    <!-- Windows Graphics Capture / Win2D helpers -->
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- H.264/HEVC encoding via Media Foundation is accessed through Win32 interop (no extra package),
+         SharpAvi/FFmpeg fallback used for encoding pipeline -->
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>
