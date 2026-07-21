@@ -1,0 +1,70 @@
+name: Build iOS IPA (unsigned)
+
+# Runs on GitHub's macOS cloud runners, so no local Mac is needed at all.
+# Trigger manually from the "Actions" tab ("Run workflow"), or automatically on every push
+# to main. The resulting unsigned .ipa is uploaded as a downloadable build artifact - see
+# docs/BUILD_WITHOUT_MAC.md for what to do with it (signing + installing via Sideloadly).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'iOS/**'
+      - '.github/workflows/build-ios.yml'
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: List available Xcode versions on this runner
+        run: ls /Applications | grep Xcode
+
+      - name: Select the newest available Xcode
+        run: |
+          LATEST_XCODE=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort | tail -n 1)
+          echo "Selecting: $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE"
+          xcodebuild -version
+
+      - name: Generate Xcode project from project.yml
+        working-directory: iOS/RemoteControlApp
+        run: xcodegen generate
+
+      - name: Show selected Xcode version (for troubleshooting)
+        run: xcodebuild -version
+
+      - name: Build unsigned .app for iOS devices
+        working-directory: iOS/RemoteControlApp
+        run: |
+          xcodebuild \
+            -project RemoteControlApp.xcodeproj \
+            -scheme RemoteControlApp \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            clean build
+
+      - name: Package as .ipa (Payload/ folder structure)
+        working-directory: iOS/RemoteControlApp
+        run: |
+          APP_PATH="build/Build/Products/Release-iphoneos/RemoteControlApp.app"
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -r RemoteControlApp-unsigned.ipa Payload
+
+      - name: Upload .ipa as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RemoteControlApp-unsigned-ipa
+          path: iOS/RemoteControlApp/RemoteControlApp-unsigned.ipa
+          retention-days: 14
